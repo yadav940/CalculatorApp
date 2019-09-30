@@ -4,16 +4,35 @@ import androidx.appcompat.app.AppCompatActivity;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
+import android.content.Context;
+import android.content.pm.PackageManager;
+import android.media.AudioManager;
+import android.media.MediaPlayer;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.VibrationEffect;
+import android.os.Vibrator;
+import android.util.Log;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import com.skydoves.elasticviews.ElasticLayout;
 
+import android.view.SoundEffectConstants;
+import android.widget.Toast;
+
+
+import com.skydoves.elasticviews.ElasticLayout;
+//Created by vinod yadav at 29-09-2019
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
     private ElasticLayout ll_seven,ll_eleght,ll_nine,ll_four,ll_five,ll_six,ll_one,ll_two,ll_three,ll_decemal;
     private ElasticLayout ll_miltiply,ll_div,ll_plus,ll_sub,ll_equel,ll_open_bracket,ll_close_bracket;
+
+    private ElasticLayout ll_m,ll_mr,ll_sto,ll_percent,ll_exp;
+    private ElasticLayout ll_sin,ll_cos,ll_tan,ll_pie,ll_hyp_10x;
+    private ElasticLayout ll_pi,ll_x_pow_y,ll_x_pow_3,ll_x_pow_2, ll_log;
+    private ElasticLayout ll_fse,ll_rdm,ll_npr,ll_func, ll_const;
+
     //@BindView(R.id.ll_zero)
     ElasticLayout ll_zero;
     private TextView tv_result;
@@ -21,6 +40,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     ElasticLayout ll_ac;
     //@BindView(R.id.ll_del)
     ElasticLayout ll_del;
+
+    private final String TAG="MainActivityTag ";
 
 
     @Override
@@ -31,6 +52,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         intit();
         lisner();
+        if (Build.VERSION.SDK_INT >= 23) {
+            //do your check here
+            if (checkSelfPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+                Log.v(TAG,"Permission is granted");
+                //File write logic here
+                return ;
+            }
+        }
+
     }
 
     private void intit(){
@@ -57,7 +87,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         ll_open_bracket=findViewById(R.id.ll_open_bracket);
         ll_close_bracket=findViewById(R.id.ll_close_bracket);
         ll_del=findViewById(R.id.ll_del);
-        ll_ac=findViewById(R.id.ll_del);
+        ll_ac=findViewById(R.id.ll_ac);
+
+        ll_sin=findViewById(R.id.ll_sin);
+        ll_cos=findViewById(R.id.ll_cos);
+        ll_tan=findViewById(R.id.ll_tan);
+        ll_pie=findViewById(R.id.ll_pie);
+        ll_hyp_10x=findViewById(R.id.ll_hyp_10x);
+
+        // ,,,,
 
     }
     private void lisner(){
@@ -84,14 +122,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         ll_del.setOnClickListener(this);
         ll_ac.setOnClickListener(this);
 
-        //,,,,,,
+
+        ll_sin.setOnClickListener(this);
+        ll_cos.setOnClickListener(this);
+        ll_tan.setOnClickListener(this);
+        ll_pie.setOnClickListener(this);
+        ll_hyp_10x.setOnClickListener(this);
+
+        //,,,,,,,,,,;
     }
 
 
     @Override
     public void onClick(View view) {
         switch (view.getId()){
-            //,,,,,,,,,
+            //
             case R.id.ll_seven:
                 tv_result.setText(tv_result.getText()+"7");
                 break;
@@ -134,7 +179,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 tv_result.setText(tv_result.getText()+"-");
                 break;
             case R.id.ll_equel:
-                tv_result.setText(eval(tv_result.getText().toString())+"");
+                tv_result.setText(eval(tv_result.getText().toString(),view)+"");
                 break;
             case R.id.ll_open_bracket:
                 tv_result.setText(tv_result.getText()+"(");
@@ -150,89 +195,124 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 if (!tv_result.getText().toString().isEmpty())
                     tv_result.setText(tv_result.getText().toString().substring(0,tv_result.getText().toString().length()-1));
                 break;
+
+
+            case R.id.ll_sin:
+                tv_result.setText(tv_result.getText()+"sin(");
+                break;
+            case R.id.ll_cos:
+                tv_result.setText(tv_result.getText()+"cos(");
+                break;
+            case R.id.ll_tan:
+                tv_result.setText(tv_result.getText()+"tan(");
+                break;
                 //,,,,,,
+        }
+
+        if (view.getId()==R.id.ll_zero||view.getId()==R.id.ll_one||view.getId()==R.id.ll_two||view.getId()==R.id.ll_three||view.getId()==R.id.ll_four||view.getId()==R.id.ll_five||view.getId()==R.id.ll_six||view.getId()==R.id.ll_seven||view.getId()==R.id.ll_eleght||view.getId()==R.id.ll_nine){
+            MediaPlayer mPlayer2;
+            mPlayer2= MediaPlayer.create(this, R.raw.num_press);
+            mPlayer2.start();
+        }
+
+        /*AudioManager audioManager =(AudioManager) this.getSystemService(Context.AUDIO_SERVICE);
+        audioManager.playSoundEffect(SoundEffectConstants.CLICK);*/
+        //view.playSoundEffect(SoundEffectConstants.CLICK);
+        Vibrator vv = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            vv.vibrate(VibrationEffect.createOneShot(50, VibrationEffect.DEFAULT_AMPLITUDE));
+        } else {
+            //deprecated in API 26
+            vv.vibrate(50);
         }
 
     }
 
-    public static double eval(final String str) {
-        return new Object() {
-            int pos = -1, ch;
+    public static double eval(final String str,View view) {
+        try {
+            return new Object() {
+                int pos = -1, ch;
 
-            void nextChar() {
-                ch = (++pos < str.length()) ? str.charAt(pos) : -1;
-            }
+                void nextChar() {
+                    ch = (++pos < str.length()) ? str.charAt(pos) : -1;
+                }
 
-            boolean eat(int charToEat) {
-                while (ch == ' ') nextChar();
-                if (ch == charToEat) {
+                boolean eat(int charToEat) {
+                    while (ch == ' ') nextChar();
+                    if (ch == charToEat) {
+                        nextChar();
+                        return true;
+                    }
+                    return false;
+                }
+
+                double parse() {
                     nextChar();
-                    return true;
-                }
-                return false;
-            }
-
-            double parse() {
-                nextChar();
-                double x = parseExpression();
-                if (pos < str.length()) throw new RuntimeException("Unexpected: " + (char)ch);
-                return x;
-            }
-
-            // Grammar:
-            // expression = term | expression `+` term | expression `-` term
-            // term = factor | term `*` factor | term `/` factor
-            // factor = `+` factor | `-` factor | `(` expression `)`
-            //        | number | functionName factor | factor `^` factor
-
-            double parseExpression() {
-                double x = parseTerm();
-                for (;;) {
-                    if      (eat('+')) x += parseTerm(); // addition
-                    else if (eat('-')) x -= parseTerm(); // subtraction
-                    else return x;
-                }
-            }
-
-            double parseTerm() {
-                double x = parseFactor();
-                for (;;) {
-                    if      (eat('*')) x *= parseFactor(); // multiplication
-                    else if (eat('/')) x /= parseFactor(); // division
-                    else return x;
-                }
-            }
-
-            double parseFactor() {
-                if (eat('+')) return parseFactor(); // unary plus
-                if (eat('-')) return -parseFactor(); // unary minus
-
-                double x;
-                int startPos = this.pos;
-                if (eat('(')) { // parentheses
-                    x = parseExpression();
-                    eat(')');
-                } else if ((ch >= '0' && ch <= '9') || ch == '.') { // numbers
-                    while ((ch >= '0' && ch <= '9') || ch == '.') nextChar();
-                    x = Double.parseDouble(str.substring(startPos, this.pos));
-                } else if (ch >= 'a' && ch <= 'z') { // functions
-                    while (ch >= 'a' && ch <= 'z') nextChar();
-                    String func = str.substring(startPos, this.pos);
-                    x = parseFactor();
-                    if (func.equals("sqrt")) x = Math.sqrt(x);
-                    else if (func.equals("sin")) x = Math.sin(Math.toRadians(x));
-                    else if (func.equals("cos")) x = Math.cos(Math.toRadians(x));
-                    else if (func.equals("tan")) x = Math.tan(Math.toRadians(x));
-                    else throw new RuntimeException("Unknown function: " + func);
-                } else {
-                    throw new RuntimeException("Unexpected: " + (char)ch);
+                    double x = parseExpression();
+                    if (pos < str.length()) throw new RuntimeException("Unexpected: " + (char)ch);
+                    return x;
                 }
 
-                if (eat('^')) x = Math.pow(x, parseFactor()); // exponentiation
+                // Grammar:
+                // expression = term | expression `+` term | expression `-` term
+                // term = factor | term `*` factor | term `/` factor
+                // factor = `+` factor | `-` factor | `(` expression `)`
+                //        | number | functionName factor | factor `^` factor
 
-                return x;
-            }
-        }.parse();
+                double parseExpression() {
+                    double x = parseTerm();
+                    for (;;) {
+                        if      (eat('+')) x += parseTerm(); // addition
+                        else if (eat('-')) x -= parseTerm(); // subtraction
+                        else return x;
+                    }
+                }
+
+                double parseTerm() {
+                    double x = parseFactor();
+                    for (;;) {
+                        if      (eat('*')) x *= parseFactor(); // multiplication
+                        else if (eat('/')) x /= parseFactor(); // division
+                        else return x;
+                    }
+                }
+
+                double parseFactor() {
+                    if (eat('+')) return parseFactor(); // unary plus
+                    if (eat('-')) return -parseFactor(); // unary minus
+
+                    double x;
+                    int startPos = this.pos;
+                    if (eat('(')) { // parentheses
+                        x = parseExpression();
+                        eat(')');
+                    } else if ((ch >= '0' && ch <= '9') || ch == '.') { // numbers
+                        while ((ch >= '0' && ch <= '9') || ch == '.') nextChar();
+                        x = Double.parseDouble(str.substring(startPos, this.pos));
+                    } else if (ch >= 'a' && ch <= 'z') { // functions
+                        while (ch >= 'a' && ch <= 'z') nextChar();
+                        String func = str.substring(startPos, this.pos);
+                        x = parseFactor();
+                        if (func.equals("sqrt")) x = Math.sqrt(x);
+                        else if (func.equals("sin")) x = Math.sin(Math.toRadians(x));
+                        else if (func.equals("cos")) x = Math.cos(Math.toRadians(x));
+                        else if (func.equals("tan")) x = Math.tan(Math.toRadians(x));
+                        else throw new RuntimeException("Unknown function: " + func);
+                    } else {
+                        throw new RuntimeException("Unexpected: " + (char)ch);
+                    }
+
+                    if (eat('^')) x = Math.pow(x, parseFactor()); // exponentiation
+
+                    return x;
+                }
+            }.parse();
+        }catch (Exception e){
+            Toast.makeText(view.getContext(),"Syntex Error",Toast.LENGTH_SHORT).show();
+            return 0.0;
+        }
+
     }
 
 
